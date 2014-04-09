@@ -26,10 +26,10 @@ bool HelloWorld::init()
     {
         return false;
     }
-    
+    CCLayerColor::initWithColor(ccc4(255,255,255,255));
     CCSize visibleSize = CCDirector::sharedDirector()->getVisibleSize();
     CCPoint origin = CCDirector::sharedDirector()->getVisibleOrigin();
-
+	#if 0
     /////////////////////////////
     // 2. add a menu item with "X" image, which is clicked to quit the program
     //    you may modify it.
@@ -72,10 +72,61 @@ bool HelloWorld::init()
 
     // add the sprite as a child to this layer
     this->addChild(pSprite, 0);
-    
+# endif
+
+	CCSprite*player=CCSprite::create("Player.png");
+	player->setPosition(ccp(20,visibleSize.height/2));
+	this->addChild(player);
+
+	this->schedule(schedule_selector(HelloWorld::gameLogic),2);
+
+
+
     return true;
 }
 
+void HelloWorld::gameLogic(float dt)
+{
+	this->createTarget();
+}
+
+
+void HelloWorld::createTarget()
+{
+	//enemy
+	CCSize screenSize=CCDirector::sharedDirector()->getVisibleSize();
+
+	target=CCSprite::create("Target.png");
+
+	int y=rand()%(int)(screenSize.height);
+
+	target->setPosition(ccp(screenSize.width-20,y));
+	this->addChild(target);
+	CCMoveTo*move=CCMoveTo::create(2,ccp(0,y));
+	CCCallFuncN*disappear=CCCallFuncN::create(this,callfuncN_selector(HelloWorld::myDefine));
+
+	CCSequence*actions=CCSequence::create(move,disappear,NULL);
+	target->runAction(actions);
+}
+
+void HelloWorld::resposponseFunc(CCObject*obj)
+{
+	//CCLOG("menu item clicked");
+	CCMoveTo*move=CCMoveTo::create(2,ccp(0,40));
+	CCCallFuncN*disappear=CCCallFuncN::create(this,callfuncN_selector(HelloWorld::myDefine));
+
+	CCSequence*actions=CCSequence::create(move,disappear,NULL);
+	target->runAction(actions);
+
+}
+
+void HelloWorld::myDefine(CCNode*who)
+{
+	who->setPosition(ccp(10,10));
+	who->setScale(2);
+	who->removeFromParentAndCleanup(true);
+
+}
 
 void HelloWorld::menuCloseCallback(CCObject* pSender)
 {
