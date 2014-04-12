@@ -22,6 +22,12 @@ public:
 	void myDefine(CCNode*who);
 	void resposponseFunc(CCObject*obj);
 	void createTarget();
+	void ccTouchesEnded(cocos2d::CCSet *pTouches, cocos2d::CCEvent *pEvent);
+	~HelloWorld();
+	void update(float delta);
+
+	cocos2d::CCArray*_targets;
+	cocos2d::CCArray*_projs;
 };
 
 #endif // __HELLOWORLD_SCENE_H__

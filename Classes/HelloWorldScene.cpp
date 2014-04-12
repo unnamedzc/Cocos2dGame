@@ -29,6 +29,8 @@ bool HelloWorld::init()
     CCLayerColor::initWithColor(ccc4(255,255,255,255));
     CCSize visibleSize = CCDirector::sharedDirector()->getVisibleSize();
     CCPoint origin = CCDirector::sharedDirector()->getVisibleOrigin();
+
+	this->setTouchEnabled(true);
 	#if 0
     /////////////////////////////
     // 2. add a menu item with "X" image, which is clicked to quit the program
@@ -79,11 +81,113 @@ bool HelloWorld::init()
 	this->addChild(player);
 
 	this->schedule(schedule_selector(HelloWorld::gameLogic),2);
+	this->schedule(schedule_selector(HelloWorld::update));
 
-
+	_projs=new CCArray;
+	_targets=new CCArray;
 
     return true;
 }
+
+void HelloWorld::update(float delta)
+{
+	CCArray* targetToDelete=new CCArray;
+	CCArray* projToDelete=new CCArray;
+	CCObject* itarget,*iproj;
+	CCARRAY_FOREACH(_targets,itarget){
+
+		CCSprite*target=(CCSprite*)itarget;
+
+		CCRect targetZone=CCRectMake(target->getPositionX(),
+			target->getPositionY(),
+			target->getContentSize().width,
+			target->getContentSize().height);
+	
+		CCARRAY_FOREACH(_projs,iproj){
+
+		CCSprite*proj=(CCSprite*)iproj;
+		CCRect projZone=CCRectMake(
+			proj->getPositionX(),
+			proj->getPositionY(),
+			proj->getContentSize().width,
+			proj->getContentSize().height);
+
+	    	if(projZone.intersectsRect(targetZone))
+		   {
+			  projToDelete->addObject(iproj);
+			  targetToDelete->addObject(itarget);
+		   }
+
+
+		}//end of iterate p
+	}//end of iterate 
+
+	CCARRAY_FOREACH(projToDelete,iproj)
+	{
+		_projs->removeObject(iproj);
+		CCSprite*proj=(CCSprite*)iproj;
+		proj->removeFromParentAndCleanup(true);
+
+	}
+
+	CCARRAY_FOREACH(targetToDelete,itarget){
+		_targets->removeObject(itarget);
+		CCSprite*target=(CCSprite*)itarget;
+		target->removeFromParentAndCleanup(true);
+	}
+
+	targetToDelete->release();
+	projToDelete->release();
+}
+
+HelloWorld::~HelloWorld()
+{
+	if(_projs!=NULL)
+	{
+		_projs->release();
+	}
+
+	if(_targets!=NULL)
+	{
+		_targets->release();
+	}
+}
+
+void HelloWorld::ccTouchesEnded(CCSet *pTouches, CCEvent *pEvent)
+{
+	CCTouch* touch=(CCTouch*)pTouches->anyObject();
+	CCPoint locInView=touch->getLocationInView();
+	CCPoint loc=CCDirector::sharedDirector()->convertToGL(locInView);
+
+	if(loc.x<=20)
+	{
+		return;
+	}
+
+	CCSize screenSize = CCDirector::sharedDirector()->getVisibleSize();  
+	CCSprite*proj=CCSprite::create("Projectile.png");
+	proj->setPosition(ccp(20,screenSize.height / 2.0));
+	this->addChild(proj);
+
+	_projs->addObject(proj);
+	proj->setTag(2);
+
+	double dx = loc.x - 20;  
+	double dy = loc.y - screenSize.height / 2.0;  
+	double d = sqrt(dx * dx + dy * dy); // 触摸点到出发点的距离  
+
+	double D=sqrt(screenSize.width * screenSize.width + screenSize.height * screenSize.height);
+	double ratio = D / d;  
+	double endx = ratio * dx + 20; // 最终点的x坐标  
+	double endy = ratio * dy + screenSize.height / 2.0;// 最终点的y坐标  
+
+	CCMoveTo* move = CCMoveTo::create(D / 320, ccp(endx, endy));  
+	CCCallFuncN* moveFinish = CCCallFuncN::create(this, callfuncN_selector(HelloWorld::myDefine));  
+	CCSequence* actions = CCSequence::create(move, moveFinish, NULL);  
+	proj->runAction(actions);
+
+}
+
 
 void HelloWorld::gameLogic(float dt)
 {
@@ -102,6 +206,10 @@ void HelloWorld::createTarget()
 
 	target->setPosition(ccp(screenSize.width-20,y));
 	this->addChild(target);
+
+	_targets->addObject(target);
+	target->setTag(1);
+
 	CCMoveTo*move=CCMoveTo::create(2,ccp(0,y));
 	CCCallFuncN*disappear=CCCallFuncN::create(this,callfuncN_selector(HelloWorld::myDefine));
 
@@ -122,9 +230,20 @@ void HelloWorld::resposponseFunc(CCObject*obj)
 
 void HelloWorld::myDefine(CCNode*who)
 {
-	who->setPosition(ccp(10,10));
-	who->setScale(2);
+	//who->setPosition(ccp(10,10));
+	//who->setScale(2);
 	who->removeFromParentAndCleanup(true);
+
+	int tag=who->getTag();
+	if(1==tag)
+	{
+		_targets->removeObject(who);
+	}
+	else if(2==tag)
+	{
+		CCLOG("_projs removed");
+		_projs->removeObject(who);
+	}
 
 }
 
