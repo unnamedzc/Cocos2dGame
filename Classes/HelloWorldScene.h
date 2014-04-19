@@ -28,6 +28,7 @@ public:
 
 	cocos2d::CCArray*_targets;
 	cocos2d::CCArray*_projs;
+	int _successCount;
 };
 
 #endif // __HELLOWORLD_SCENE_H__

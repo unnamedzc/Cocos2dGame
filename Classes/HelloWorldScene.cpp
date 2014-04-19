@@ -1,4 +1,6 @@
 #include "HelloWorldScene.h"
+#include "SimpleAudioEngine.h"
+#include "GameOverLayer.h"
 
 USING_NS_CC;
 
@@ -83,8 +85,12 @@ bool HelloWorld::init()
 	this->schedule(schedule_selector(HelloWorld::gameLogic),2);
 	this->schedule(schedule_selector(HelloWorld::update));
 
+	CocosDenshion::SimpleAudioEngine::sharedEngine()->playBackgroundMusic("background-music-aac.wav",true);
+
 	_projs=new CCArray;
 	_targets=new CCArray;
+
+	_successCount=0;
 
     return true;
 }
@@ -114,6 +120,14 @@ void HelloWorld::update(float delta)
 
 	    	if(projZone.intersectsRect(targetZone))
 		   {
+			   if(_successCount++>5)
+			   {
+				   CCScene*overScene=GameOverLayer::scene();
+				   GameOverLayer*overLayer=(GameOverLayer*)overScene->getChildByTag(100);
+				   overLayer->_label->setString("Man,you rock!");
+				   CCDirector::sharedDirector()->replaceScene(overScene);
+			   }
+
 			  projToDelete->addObject(iproj);
 			  targetToDelete->addObject(itarget);
 		   }
@@ -171,6 +185,8 @@ void HelloWorld::ccTouchesEnded(CCSet *pTouches, CCEvent *pEvent)
 
 	_projs->addObject(proj);
 	proj->setTag(2);
+
+	CocosDenshion::SimpleAudioEngine::sharedEngine()->playEffect("pew-pew-lei.wav");
 
 	double dx = loc.x - 20;  
 	double dy = loc.y - screenSize.height / 2.0;  
@@ -238,6 +254,12 @@ void HelloWorld::myDefine(CCNode*who)
 	if(1==tag)
 	{
 		_targets->removeObject(who);
+
+		CCScene*overScene=GameOverLayer::scene();
+		GameOverLayer*overLayer=(GameOverLayer*)overScene->getChildByTag(100);
+		overLayer->_label->setString("Man,you sock!");
+
+		CCDirector::sharedDirector()->replaceScene(overScene);
 	}
 	else if(2==tag)
 	{
